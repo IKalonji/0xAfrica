@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.7.0 <0.9.0;
 import "./ZExAfricaStablecoin.sol"; 
-// @ title: Main deployer and DEX contract
+import "./ZExAfricaOracle.sol";
+import "./ZexAfricaLiquidityToken.sol";
+
+interface IZExAfricaOracle {
+
+    function getRate(string memory _tokenName) external view returns(uint256);
+
+}
+
+/// @title Main deployer and DEX contract
 contract ZExAfricaDEX {
     
     uint256 public transactionFee;
@@ -11,19 +20,18 @@ contract ZExAfricaDEX {
 
     address public manager;
 
-    address[] public liquidityProvidersAddressList;
+    address public oracleAddress;
 
-    bool liquidityProvisionLockedForRewardDistribution;
-    
-    mapping (string => uint256) public exchangeRatePerUnit;
+    IZExAfricaOracle priceFeedOracle;
+
+    ZExAfricaLiquidityToken liquidityTokenContract;
+
     mapping (string => ZExAfricaStablecoin) public tokenContractsDeployed;
-    mapping (address => LiquidityProvider) public liquidityProvider;
 
     event NewStablecoinDeployed(string _tokenName, string _tokenSymbol, address _tokenAddress, string _peggedCurrency);
     event TransactionFeeUpdated(uint256 _feeAmount);
     event TokenSwapInitiated(address _for, string _tokenName, uint _value);
     event LowLiquidity(address _tokenAddress, string _tokenName, string _reason);
-    event ExchangeRateSet(address indexed _tokenAddress, string _tokenName, uint256 _rate);
     event TokensSwapped(address indexed _contract, string _tokenName, uint256 _sendersNewBalance);
     event LiquidityAddedToDEX(address _provider, uint256 _amount, uint256 _providerBalance, uint _contractBalance);
     event LiquidityWithdrawn(address _provider, uint256 _amountWithdrawn, uint256 _providersBalance);
@@ -33,11 +41,6 @@ contract ZExAfricaDEX {
     event ProviderDoesNotQualifyForReward(address indexed _provider, uint256 _providerBalance);
 
     error TokenNameRequired(string _error, string _solution);
-
-    struct LiquidityProvider{
-        uint256 balance;
-        uint256 rewardsBalance;
-    }
     
     modifier OnlyManager(string memory _message){
         require(msg.sender == manager, _message);
@@ -54,21 +57,11 @@ contract ZExAfricaDEX {
         _;
     }
 
-    modifier OnlyLiquidityProvider(){
-        require(liquidityProvider[msg.sender].balance >= minimumLiquidityContributionAmount);
-        require(msg.sender != address(0));
-        _;
-    }
-
-    modifier IsLiquidityProvisionLocked(){
-        require(!liquidityProvisionLockedForRewardDistribution, 
-        "Cannot provide liquidity during rewards distribution. Please wait until rewards have been distributed before you may continue providing liquidity");
-        _;
-    }
-
-    constructor(){
+    constructor(address _oracleAddress){
+        oracleAddress = _oracleAddress;
         manager = msg.sender;
-        liquidityProvisionLockedForRewardDistribution = false;
+        priceFeedOracle = IZExAfricaOracle(oracleAddress);
+        liquidityTokenContract = new ZExAfricaLiquidityToken("0xAfrica Liquidity Token", "0xAL");
     }
 
     function getTransactionFee()public view returns(uint256 _fee){
@@ -81,12 +74,7 @@ contract ZExAfricaDEX {
     }
 
     function getExchangeRate(string memory _tokenName) public view returns(uint256 _rate){
-        _rate = exchangeRatePerUnit[_tokenName];
-    }
-
-    function setExchangeRate(string memory _tokenName, uint _rate) external OnlyManager("Only the manager can set the exchange rate.") ContractExists(_tokenName) {
-        exchangeRatePerUnit[_tokenName] = _rate;
-        emit ExchangeRateSet(address(tokenContractsDeployed[_tokenName]), _tokenName, _rate);
+        _rate = priceFeedOracle.getRate(_tokenName);
     }
 
     function getMinimumContributionAmount() public view returns(uint256 _amount){
@@ -102,10 +90,6 @@ contract ZExAfricaDEX {
         _contractAddress = address(tokenContractsDeployed[_name]);
     }
 
-    function setLiquidityProvisionLock(bool _locked) internal {
-        liquidityProvisionLockedForRewardDistribution = _locked;
-    }
-
     function deployStablecoin(string memory _name, string memory _symbol, string memory _peggedCurrency) external OnlyManager("Only the manager or delgated authority can deploy a new stablecoin") returns(bool){
         tokenContractsDeployed[_name] = new ZExAfricaStablecoin(_name, _symbol, _peggedCurrency);
         emit NewStablecoinDeployed(_name, _symbol, address(tokenContractsDeployed[_name]), _peggedCurrency);
@@ -114,7 +98,7 @@ contract ZExAfricaDEX {
 
     function onRamp(address _sender, uint256 _value, ZExAfricaStablecoin _contract) internal ContractHasSufficientLiquidity(_contract, _value) returns(bool success){
         //get the exchange rate. 
-        uint256 _rate = exchangeRatePerUnit[_contract.name()];
+        uint256 _rate = priceFeedOracle.getRate(_contract.name());
         //calculate the amount to be minted based on the native token that was sent.
         uint256 _amountToBeMinted = _value * _rate;
         //call the mint method on the _contract
@@ -147,35 +131,31 @@ contract ZExAfricaDEX {
     function checkLiquidity(ZExAfricaStablecoin _contract, uint _tentativeAmountToBeMinted) internal returns(bool){
         uint256 nativeTokenBalanceInFactory = address(this).balance;
         uint256 stablecoinCurrentSupplyIfSwapIsSuccessful = _contract.totalSupply() + _tentativeAmountToBeMinted;
-        if (nativeTokenBalanceInFactory >= stablecoinCurrentSupplyIfSwapIsSuccessful*exchangeRatePerUnit[_contract.name()]){
+        uint256 _rate = priceFeedOracle.getRate(_contract.name());
+        require(_rate != 0, "Rate cannot be zero, Pricefeed Oracle returned 0");
+        if (nativeTokenBalanceInFactory >= stablecoinCurrentSupplyIfSwapIsSuccessful*priceFeedOracle.getRate(_contract.name())){
             return true;
         }
         emit LowLiquidity(address(_contract), _contract.name(), "Current liquidity is below the minimum threshold, swap cannot be processed at the moment.");
         return false;
     }
 
-    function provideLiquidity() external payable IsLiquidityProvisionLocked{
+    function provideLiquidity() external payable {
         require(msg.value >= minimumLiquidityContributionAmount);
-        liquidityProvider[msg.sender].balance += msg.value;
+        liquidityTokenContract.mintNewTokens(msg.sender, msg.value);
         currentLiquidityAmount += msg.value;
-        liquidityProvidersAddressList.push(msg.sender);
-        emit LiquidityAddedToDEX(msg.sender, msg.value, liquidityProvider[msg.sender].balance, address(this).balance);
-    }
-
-    function distributeLiquidityProvidersReward() external OnlyManager("Only the contract manager can distribute rewards"){
-        require(totalFeesCollected >= 10**18, "Minimum value needs to be reached before rewards can be distributed.");
-        setLiquidityProvisionLock(true);        
+        emit LiquidityAddedToDEX(msg.sender, msg.value, liquidityTokenContract.balanceOf(msg.sender), address(this).balance);
     }
 
     function withdrawLiquidity(uint256 _withdrawalAmount) external returns(uint256 _newProviderBalance){
-        require(liquidityProvider[msg.sender].balance != 0, "Sender does not have an available balance.");
+        require(liquidityTokenContract.balanceOf(msg.sender) != 0, "Sender does not have an available balance.");
         require(msg.sender != address(0), "Zero address cannot transact on this method.");
-        require(providerBalanceGreaterThanMinimumAmountOrEqualToZeroOnWithdrawal(_withdrawalAmount, liquidityProvider[msg.sender].balance), 
+        require(providerBalanceGreaterThanMinimumAmountOrEqualToZeroOnWithdrawal(_withdrawalAmount, liquidityTokenContract.balanceOf(msg.sender)), 
             "When withdrawing liquidity, your liquidity balance remaining after withdrawal needs to be greater than the minimum liquidity amount or equal to zero." );
-        liquidityProvider[msg.sender].balance -= _withdrawalAmount;
+        releaseRewards(_withdrawalAmount);
         currentLiquidityAmount -= _withdrawalAmount;
-        emit LiquidityWithdrawn(msg.sender, _withdrawalAmount, liquidityProvider[msg.sender].balance);
-        return liquidityProvider[msg.sender].balance;
+        emit LiquidityWithdrawn(msg.sender, _withdrawalAmount, liquidityTokenContract.balanceOf(msg.sender));
+        return liquidityTokenContract.balanceOf(msg.sender);
     }
 
     function providerBalanceGreaterThanMinimumAmountOrEqualToZeroOnWithdrawal(uint256 _withdrawalAmount, uint256 _providerBalance) internal view returns(bool){
@@ -185,19 +165,11 @@ contract ZExAfricaDEX {
         return false;
     }
 
-    function releaseRewards(address[] memory _addressList) internal OnlyManager("Only manager can release rewards.") returns(bool _completed){
-        uint256 _counter;
-        for (_counter; _counter < _addressList.length; _counter++){
-            bool _providerBalanceAboveMinimum = liquidityProvider[_addressList[_counter]].balance >= minimumLiquidityContributionAmount;
-            if (_providerBalanceAboveMinimum){
-                uint256 _rewardShare = (liquidityProvider[_addressList[_counter]].balance * 100) / currentLiquidityAmount;
-                uint256 _payoutAmount = (currentLiquidityAmount /100)*_rewardShare;
-                payable(_addressList[_counter]).transfer(_payoutAmount);
-                emit RewardWithdrawn(_addressList[_counter], _payoutAmount, liquidityProvider[_addressList[_counter]].balance);
-            }else {
-                emit ProviderDoesNotQualifyForReward(_addressList[_counter], liquidityProvider[_addressList[_counter]].balance);
-            }
-        }
-        return true;
+    function releaseRewards(uint _amountWithdrawn) internal returns(bool _completed){
+        require(_amountWithdrawn <= liquidityTokenContract.balanceOf(msg.sender), "You do not have sufficient balance to withdraw");
+        uint256 _rewardPortion = totalFeesCollected / liquidityTokenContract.totalSupply();
+        liquidityTokenContract.burnTokens(msg.sender, _amountWithdrawn);
+        payable(msg.sender).transfer(_rewardPortion*_amountWithdrawn);
+        _completed = true;
     }
 }
