@@ -4,7 +4,6 @@ import { Token } from '../models/Token.model';
 import { TokenService } from '../services/token.service';
 
 import { chains, IChains } from '../models/Chains.model';
-import { zip } from 'rxjs';
 
 
 @Component({
@@ -18,11 +17,11 @@ export class DexComponent implements OnInit {
   walletAddress: string = "";
   Tokens: Token[] = []
 
-  _fromAmount: Number = 1000;
-  _toAmount: Number = 0;
+  _fromAmount: any = 10;
+  _toAmount: any = 0;
 
-  selectedFromToken: string = "";
-  selectedToToken:string = "";
+  selectedFromToken: any = "";
+  selectedToToken:any = "";
 
   canSwap:boolean = false;
 
@@ -99,7 +98,7 @@ export class DexComponent implements OnInit {
     }
   }
 
-  calculateSwap(){
+  async calculateSwap(){
     console.log("Logging selected from token: ", this.selectedFromToken);
     console.log("Logging selected to token: ", this.selectedToToken);
     console.log("Logging base token amount: ", this._fromAmount);
@@ -117,21 +116,23 @@ export class DexComponent implements OnInit {
       })
     }
     else {
+      const resp = this.tokenService.getRate(this.chain.contracts.dex,this.selectedToToken.tokenName.toLowerCase());
+      console.log("resp: ", typeof(resp))
+      console.log("_from: ", typeof(this._fromAmount))
+      console.log("_to: ", typeof(this._toAmount))
+      this._toAmount = this._fromAmount * await resp/1**18
+      console.log(this._toAmount);
       this.canSwap = true;
     }
   }
 
   async swapTokens(){
-    if (this.walletConnected){
-      let tronweb = window.tronWeb;
-      let transaction = await tronweb.transactionBuilder.sendTrx('TN9RRaXkCFtTXRso2GdTZxSxxwufzxLQPP', 10, this.walletAddress)
-      let signedTx = await tronweb.trx.sign(transaction);
-      let boast = await tronweb.trx.sendRawTransaction(signedTx);
-      console.log("Logging transaction complete")
-    }
-    else{
+    if (this.chain.name != "Tron"){
+      const resp = await this.tokenService.executeSwap(this.chain.contracts.dex,this.selectedToToken.tokenName.toLowerCase(), this._fromAmount);
+      console.log(resp);
       this.confirmationService.confirm({
-        message: "In order for the 0xAfrica DEX to connect to you wallet you need to have signed into TronLink. Please open you TronLink Wallet Extension and sign in, then try connecting your wallet again.",
+        header: "Swappp complete",
+        message: "View the transaction on the testnet explorer",
         accept: () => {},
         acceptLabel: "Ok",
         acceptIcon: "pi pi-thumbs-up",
@@ -139,6 +140,25 @@ export class DexComponent implements OnInit {
         rejectVisible: false,
         closeOnEscape: false,
       })
+    }else{
+      if (this.walletConnected){
+        let tronweb = window.tronWeb;
+        let transaction = await tronweb.transactionBuilder.sendTrx('TN9RRaXkCFtTXRso2GdTZxSxxwufzxLQPP', 10, this.walletAddress)
+        let signedTx = await tronweb.trx.sign(transaction);
+        let boast = await tronweb.trx.sendRawTransaction(signedTx);
+        console.log("Logging transaction complete")
+      }
+      else{
+        this.confirmationService.confirm({
+          message: "In order for the 0xAfrica DEX to connect to you wallet you need to have signed into TronLink. Please open you TronLink Wallet Extension and sign in, then try connecting your wallet again.",
+          accept: () => {},
+          acceptLabel: "Ok",
+          acceptIcon: "pi pi-thumbs-up",
+          dismissableMask: false,
+          rejectVisible: false,
+          closeOnEscape: false,
+        })
+      }
     }
   }
 

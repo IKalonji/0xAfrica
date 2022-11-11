@@ -29,8 +29,10 @@
                         incrementButtonClass="p-button-success" 
                         incrementButtonIcon="pi pi-plus" 
                         decrementButtonIcon="pi pi-minus"
-                        [step]="10"
-                        [min]="10">
+                        mode="decimal"
+                        [minFractionDigits]="2" 
+                        [maxFractionDigits]="4"
+                        >
         </p-inputNumber>
         &nbsp;
         <p-dropdown [options]="Tokens" [(ngModel)]="selectedFromToken" optionLabel="tokenName">
@@ -90,7 +92,7 @@
 </div>
 <p-confirmDialog header="Sign into TronLink" icon="pi pi-wallet" [transitionOptions]="'0ms'"></p-confirmDialog>
 <div style="text-align: center;">
-  <h2>Contracts</h2>
+  <h2>0xAfrica Contracts</h2>
   <label>Please add token contracts to your wallet to interact with the token</label>
 </div>
 <p-carousel [value]="CHAINS" [numVisible]="1">

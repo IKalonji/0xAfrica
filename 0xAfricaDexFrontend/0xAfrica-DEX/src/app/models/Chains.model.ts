@@ -52,12 +52,12 @@ export const chains : IChains[] = [
         name: "Tron",
         logo: "//logo.chainbit.xyz/trx",
         contracts: {
-            dex: "0xAfrica",
-            oracle: "",
-            franc: "0xAfrica",
-            rand: "0xAfrica",
-            pound: "0xAfrica",
-            naira: "0xAfrica"
+            dex: "0xAfrica not deployed",
+            oracle: "TK3e9hGPNrsJzCV3d8H8vkiN6QLmCJM4a9",
+            franc: "0xAfrica not deployed",
+            rand: "0xAfrica not deployed",
+            pound: "0xAfrica not deployed",
+            naira: "0xAfrica not deployed"
         }
     }
 ]
