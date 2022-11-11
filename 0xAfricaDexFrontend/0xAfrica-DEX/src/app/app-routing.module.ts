@@ -16,6 +16,10 @@ const routes: Routes = [
   {
     path: "0xAfrica/dex",
     component: DexComponent
+  },
+  {
+    path: "**/**",
+    component: HomepageComponent
   }
 ];
 

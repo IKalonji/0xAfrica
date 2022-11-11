@@ -18,25 +18,11 @@ contract ZExAfricaOracle {
         require(exchangeRate[_tokenName] != 0, "Exchange rate has not been set for this token");
         _;
     }
-
-    event AdminSet(address _adminAddress, address _ownerAddress);
-    event ContractOwnershipTransferred(address _from, address _to);
+    
     event NewRateSet(string _tokenName, uint256 _oldRate, uint256 _newRate);
 
     constructor() {
         Owner = msg.sender;
-    }
-
-    function setAdmin(address _adminAddress) external OnlyOwnerOrAdmin(msg.sender) returns(bool success){
-        Admin = _adminAddress;
-        emit AdminSet(Admin, Owner);
-        success = true;
-    }
-
-    function transferOwnership(address _newOwner) external OnlyOwnerOrAdmin(msg.sender) returns(bool success){
-        Owner = _newOwner;
-        emit ContractOwnershipTransferred(msg.sender, _newOwner);
-        success = true;
     }
 
     function getRate(string memory _tokenName) external view IsRateAvailable(_tokenName) returns(uint256 _rate){

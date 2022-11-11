@@ -2,7 +2,7 @@
 pragma solidity >=0.7.0 <0.9.0;
 import "./ZExAfricaStablecoin.sol"; 
 import "./ZExAfricaOracle.sol";
-import "./ZexAfricaLiquidityToken.sol";
+import "./ZExAfricaLiquidityToken.sol";
 
 interface IZExAfricaOracle {
 

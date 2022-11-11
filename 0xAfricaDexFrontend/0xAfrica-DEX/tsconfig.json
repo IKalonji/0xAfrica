@@ -21,9 +21,20 @@
     "lib": [
       "es2020",
       "dom"
-    ]
+    ],
+    "typeRoots": ["./src/types"],
+    "paths" : {
+      "crypto": ["./node_modules/crypto-browserify"],
+      "stream": ["./node_modules/stream-browserify"],
+      "assert": ["./node_modules/assert"],
+      "http": ["./node_modules/stream-http"],
+      "https": ["./node_modules/https-browserify"],
+      "os": ["./node_modules/os-browserify"],
+    },
+    "resolveJsonModule": true
   },
   "angularCompilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
