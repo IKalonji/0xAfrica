@@ -1,0 +1,96 @@
+<h1>
+    0xAfrica DEX Contracts Analytics by Chain
+</h1>
+<h3>
+    View DEX contract data on Stablecoin liquidity.
+</h3>
+<div class="horizontal-spacer"></div>
+<div class="main">
+    <p-card class="card-style">
+        <ng-template pTemplate="header">
+            {{chains[0].name}}
+        </ng-template>
+        <p-splitButton [showTransitionOptions]="'0ms'" [hideTransitionOptions]="'0ms'" label="Lookup Query" icon="pi pi-check" (onClick)="query()" [model]="queries" styleClass="p-button-outlined p-button-secondary mr-2 mb-2"></p-splitButton>
+        <ng-template pTemplate="footer">
+            
+        </ng-template>
+    </p-card>
+    <div class="card-spacer"></div>
+    <p-card class="card-style">
+        <ng-template pTemplate="header">
+            {{chains[1].name}}
+        </ng-template>
+        <p-splitButton [showTransitionOptions]="'0ms'" [hideTransitionOptions]="'0ms'" label="Lookup Query" icon="pi pi-check" [model]="queries" styleClass="p-button-outlined p-button-secondary mr-2 mb-2"></p-splitButton>
+        <ng-template pTemplate="footer">
+            
+        </ng-template>
+    </p-card>
+    <div class="card-spacer"></div>
+    <p-card class="card-style">
+        <ng-template pTemplate="header">
+            {{chains[2].name}}
+        </ng-template>
+        <p-splitButton [showTransitionOptions]="'0ms'" [hideTransitionOptions]="'0ms'" label="Lookup Query" icon="pi pi-check" (onClick)="query()" [model]="queries" styleClass="p-button-outlined p-button-secondary mr-2 mb-2"></p-splitButton>
+        <ng-template pTemplate="footer">
+            
+        </ng-template>
+    </p-card>
+    <div class="card-spacer"></div>
+    <p-card class="card-style">
+        <ng-template pTemplate="header">
+            {{chains[3].name}}
+        </ng-template>
+        <p-splitButton [showTransitionOptions]="'0ms'" [hideTransitionOptions]="'0ms'" label="Lookup Query" icon="pi pi-check" (onClick)="query()" [model]="queries" styleClass="p-button-outlined p-button-secondary mr-2 mb-2"></p-splitButton>
+        <ng-template pTemplate="footer">
+            
+        </ng-template>
+    </p-card>
+</div>
+<div class="horizontal-spacer"></div>
+<footer>
+    <p>Powered by:</p>
+    <p><a href="https://moralis.io/" target="_blank">Moralis</a> and <a href="https://www.covalenthq.com/" target="_blank">CovalentHQ</a></p>
+</footer>
+
+<style>
+    .main {
+    width: 100%;
+    display: flex;
+    }
+
+    .card-spacer{
+        width: 30px;
+    }
+
+    .horizontal-spacer{
+        height: 100px;
+    }
+
+    h1{
+        text-align: center;
+    }
+
+    h3{
+        text-align: center;
+    }
+
+    .card-style{
+        box-shadow: 10px 10px purple;
+        border: solid black 2px;
+        height: 400px;
+        width: 400px;
+        text-align: center;
+        padding: 0%;
+    }
+
+    img{
+        height: 20px;
+        width: 20px;
+    }
+
+    footer{
+        text-align: center;
+    }
+
+
+</style>

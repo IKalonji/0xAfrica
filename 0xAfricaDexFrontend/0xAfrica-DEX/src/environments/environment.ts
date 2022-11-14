@@ -4,6 +4,8 @@
 
 export const environment = {
   production: false,
+  covalent: "ckey_bc359eed184b4990ad1be0846cd",
+  moralis: "8aDUlEPn2swK66vI6WhX3UKy1hc6zhteFR49b3XV75Nq8X6uZBdshqVXywMbsfEi"
 };
 /*
  * For easier debugging in development mode, you can import the following file

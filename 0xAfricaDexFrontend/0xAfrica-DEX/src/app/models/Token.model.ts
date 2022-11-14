@@ -97,9 +97,9 @@ export const POLYGONTokens: Token[] = [
 
 export const TRONTokens: Token[] = [
     {
-        country: "BNB",
-        tokenName: "BNB",
-        tokenSymbol: "BNB",
+        country: "Tron",
+        tokenName: "Tron",
+        tokenSymbol: "Trx",
         tokenFlag: "//logo.chainbit.xyz/trx"
     }
     ,{

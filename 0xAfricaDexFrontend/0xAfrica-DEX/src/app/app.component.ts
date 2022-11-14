@@ -20,4 +20,8 @@ export class AppComponent implements OnInit {
   launchDEX(){
     this.router.navigate(["0xAfrica/dex"]);
   }
+
+  goToAnalytics(){
+    this.router.navigateByUrl("0xAfrica/analytics");
+  }
 }

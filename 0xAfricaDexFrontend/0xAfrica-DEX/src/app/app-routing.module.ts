@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AnalyticsComponent } from './analytics/analytics.component';
 import { DexComponent } from './dex/dex.component';
 import { HomepageComponent } from './homepage/homepage.component';
 
@@ -16,6 +17,10 @@ const routes: Routes = [
   {
     path: "0xAfrica/dex",
     component: DexComponent
+  },
+  {
+    path: "0xAfrica/analytics",
+    component: AnalyticsComponent
   },
   {
     path: "**/**",

@@ -4,6 +4,7 @@ import { Token } from '../models/Token.model';
 import { TokenService } from '../services/token.service';
 
 import { chains, IChains } from '../models/Chains.model';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -29,7 +30,7 @@ export class DexComponent implements OnInit {
   chain: any;
   CHAINS: any = [];
 
-  constructor(private tokenService: TokenService, private confirmationService:ConfirmationService) { 
+  constructor(private tokenService: TokenService, private confirmationService:ConfirmationService, private router:Router) { 
 
   }
 
@@ -160,6 +161,10 @@ export class DexComponent implements OnInit {
         })
       }
     }
+  }
+
+  goToAnalytics(){
+    this.router.navigateByUrl("0xAfrica/analytics");
   }
 
 }
